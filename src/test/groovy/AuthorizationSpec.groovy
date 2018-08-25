@@ -4,6 +4,7 @@ import groovyx.net.http.RESTClient
 import org.json.JSON
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 
 class AuthorizationSpec extends Specification {
@@ -50,4 +51,23 @@ class AuthorizationSpec extends Specification {
         then: "Wtedy powinienem dostać informację, że użytkownik nie istnieję numerze statusu 404."
         resp.status == 404
     }
+
+    @Unroll
+    def "powinien zwrocic #statusCode dla loginu: #login i hasla: #haslo"(){
+        given: "Zakładając, że w systemie istnieje użytkownik o loginie #login i haslo #haslo"
+        restClient.post(path: "/addUser", body: new LoginDTO(login, haslo), contentType: ContentType.JSON)
+
+        when: "Gdy chce zalogować się na konto #login, podając hasło #haslo"
+        HttpResponseDecorator resp  = restClient.post(path: "/login", body: new LoginDTO(login, haslo), contentType: ContentType.JSON)
+
+        then: "Wtedy powinienem dostać informację o numerze #statusCode."
+        resp.status == statusCode
+
+        where:
+        login       | haslo          | statusCode
+        "Admin"     | "Admin"        | 200
+        "Sebek"     | "Urtica"       | 200
+        "eva"       | "haslo_evy"    | 200
+    }
+
 }
